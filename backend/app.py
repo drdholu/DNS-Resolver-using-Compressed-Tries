@@ -41,5 +41,29 @@ def store_domain():
     resolver.trie.insert(domain, random_ip)
     return jsonify({"message": f"Stored random IP {random_ip} for {domain}"}), 200
 
+@app.route('/trie', methods=['GET'])
+def get_trie_structure():
+    """Return the trie structure for visualization."""
+    trie_data = serialize_trie(resolver.trie.root)
+    return jsonify(trie_data)
+
+def serialize_trie(node, label="root"):
+    """Convert trie node to a serializable format for visualization."""
+    result = {
+        "name": label,
+        "attributes": {}
+    }
+    
+    if node.is_end:
+        result["attributes"]["ip"] = node.ip_address
+        result["attributes"]["isEnd"] = True
+    
+    if node.children:
+        result["children"] = []
+        for key, child in node.children.items():
+            result["children"].append(serialize_trie(child, key))
+    
+    return result
+
 if __name__ == '__main__':
     app.run(debug=True)
