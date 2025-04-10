@@ -67,3 +67,12 @@ def serialize_trie(node, label="root"):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+"""
+1. User types "google.com"
+2. Frontend calls GET /resolve?domain=google.com
+3. Backend checks Trie and Storage
+4. If found: returns existing IP
+5. If not found: generates random IP, stores it, updates Trie
+6. Frontend displays result and updates visualization
+"""
