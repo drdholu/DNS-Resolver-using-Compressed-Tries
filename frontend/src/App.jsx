@@ -46,7 +46,7 @@ function App() {
             
             // If it's a newly generated IP, show a note
             if (response.data.note) {
-                setError(`New domain detected. Generated random IP address.`);
+                setError(`New domain detected. Fetched actual IP address`);
             }
             
             // Refresh trie structure after resolution

@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dns_resolver import DNSResolver
 import random
+import socket
 
 app = Flask(__name__)
 CORS(app)
@@ -20,11 +21,14 @@ def resolve_domain():
 
     ip_address = resolver.resolve(domain)
     if ip_address == "Not Found":
-        # Generate and store a random IP for new domains
-        random_ip = generate_random_ip()
-        resolver.storage.add_record(domain, random_ip)
-        resolver.trie.insert(domain, random_ip)
-        return jsonify({"domain": domain, "ip": random_ip, "note": "Generated random IP"})
+        try:
+            # Fetch actual IP address
+            ip_address = socket.gethostbyname(domain)
+            resolver.storage.add_record(domain, ip_address)
+            resolver.trie.insert(domain, ip_address)
+            return jsonify({"domain": domain, "ip": ip_address, "note": "Fetched IP address"})
+        except socket.gaierror:
+            return jsonify({"error": "Domain not found"}), 404
     
     return jsonify({"domain": domain, "ip": ip_address})
 
@@ -73,6 +77,6 @@ if __name__ == '__main__':
 2. Frontend calls GET /resolve?domain=google.com
 3. Backend checks Trie and Storage
 4. If found: returns existing IP
-5. If not found: generates random IP, stores it, updates Trie
+5. If not found: fetches actual IP, stores it, updates Trie
 6. Frontend displays result and updates visualization
 """
