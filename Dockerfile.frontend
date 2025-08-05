@@ -1,0 +1,40 @@
+# syntax=docker/dockerfile:1
+
+# -------------------------
+# Front-end Dockerfile
+# -------------------------
+# This is a multi-stage build. The first stage (builder) compiles the
+# React/Vite project, and the second stage (production) serves the
+# compiled static assets using Nginx.
+
+###########
+# Builder #
+###########
+FROM node:20-alpine AS builder
+
+# Create app directory
+WORKDIR /app
+
+# Install dependencies first (leverages Docker layer caching)
+COPY frontend/package*.json ./
+RUN npm ci --silent
+
+# Copy the rest of the source code
+COPY frontend/ .
+
+# Build the production files
+RUN npm run build
+
+##############
+# Production #
+##############
+FROM nginx:stable-alpine
+
+# Copy build output from the previous stage
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Expose the port Nginx will listen on
+EXPOSE 80
+
+# Run Nginx in the foreground
+CMD ["nginx", "-g", "daemon off;"]

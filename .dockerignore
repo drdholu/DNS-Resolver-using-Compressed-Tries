@@ -1,0 +1,29 @@
+# Ignore Python cache & venv
+**/__pycache__
+*.py[cod]
+backend/venv
+
+# Ignore Git repo
+.git
+
+# Ignore environment & dotenv files
+.env
+.env.*
+
+# Ignore IDE/editor project files
+.vscode
+.idea
+
+# Ignore build artifacts
+frontend/dist
+frontend/.vite
+
+# Ignore node modules (large!)
+frontend/node_modules
+
+# General OS / misc files
+.DS_Store
+Thumbs.db
+backend/test.py
+backend/test2.py
+backend/test3.py

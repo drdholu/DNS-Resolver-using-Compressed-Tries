@@ -1,0 +1,33 @@
+# syntax=docker/dockerfile:1
+
+# -------------------------
+# Backend Dockerfile
+# -------------------------
+# We use a slim Python image to keep the image size small while still
+# including everything we need to run a production Flask application.
+FROM python:3.11-slim AS base
+
+# Create and set the working directory inside the container
+WORKDIR /app
+
+# Install build dependencies only if we need to compile Python packages
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy minimal production requirements to leverage Docker cache layers
+COPY backend/requirements.prod.txt ./requirements.txt
+
+# Upgrade pip and install Python dependencies (only what we need for runtime)
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir gunicorn \
+    && pip install --no-cache-dir -r requirements.txt
+
+# Copy the backend application source code into the image
+COPY backend/ .
+
+# Expose the port the app runs on
+EXPOSE 5000
+
+# Start the application using gunicorn so it is production-ready
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
