@@ -11,6 +11,11 @@ function App() {
     const [trieData, setTrieData] = useState(null);
     const [showTrie, setShowTrie] = useState(false);
     const [history, setHistory] = useState([]);
+    // Browser local storage – ensures DNS records remain private per user
+    const [localRecords, setLocalRecords] = useState(() => {
+        const stored = localStorage.getItem('dnsRecords');
+        return stored ? JSON.parse(stored) : {};
+    });
 
     // Fetch trie structure on initial load and after resolution
     const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:5000';
@@ -31,33 +36,53 @@ function App() {
 
     const resolveDomain = async () => {
         if (!domain.trim()) return;
-        
+
         setIp(null);
         setError(null);
         setLoading(true);
-        
+
         try {
-            const response = await axios.get(`${API_BASE_URL}/resolve?domain=${domain}`);
-            setIp(response.data.ip);
-            
-            // Add to history
-            setHistory(prev => [
-                { domain, ip: response.data.ip, timestamp: new Date().toLocaleTimeString() },
-                ...prev.slice(0, 4) // Keep last 5 entries
-            ]);
-            
-            // If it's a newly generated IP, show a note
-            if (response.data.note) {
-                setError(`New domain detected. Fetched actual IP address`);
+            // 1. Check if the domain exists in the user's local storage
+            if (localRecords[domain]) {
+                const storedIp = localRecords[domain];
+                setIp(storedIp);
+
+                // Update history (keep last 5 entries)
+                setHistory(prev => [
+                    { domain, ip: storedIp, timestamp: new Date().toLocaleTimeString() },
+                    ...prev.slice(0, 4)
+                ]);
+
+                setShowTrie(false); // Nothing new to show on the server-side trie
+                return; // Skip backend call
             }
-            
-            // Refresh trie structure after resolution
+
+            // 2. Fall back to backend resolution if not found locally
+            const response = await axios.get(`${API_BASE_URL}/resolve?domain=${domain}`);
+            const resolvedIp = response.data.ip;
+            setIp(resolvedIp);
+
+            // Update history
+            setHistory(prev => [
+                { domain, ip: resolvedIp, timestamp: new Date().toLocaleTimeString() },
+                ...prev.slice(0, 4)
+            ]);
+
+            // Persist to local storage so only this user sees it
+            const updatedRecords = { ...localRecords, [domain]: resolvedIp };
+            setLocalRecords(updatedRecords);
+            localStorage.setItem('dnsRecords', JSON.stringify(updatedRecords));
+
+            // Display note if backend indicates it fetched a fresh IP
+            if (response.data.note) {
+                setError('New domain detected. Fetched actual IP address');
+            }
+
+            // Refresh server-side trie (optional visualisation)
             await fetchTrieStructure();
-            
-            // Auto-show trie after resolving
             setShowTrie(true);
         } catch (err) {
-            setError("Server error occurred.");
+            setError('Server error occurred.');
         } finally {
             setLoading(false);
         }

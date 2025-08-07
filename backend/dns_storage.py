@@ -8,23 +8,20 @@ class DNSStorage:
         self.load_records()  # Load data when initialized
 
     def load_records(self):
-        """Load stored DNS records from file into memory."""
-        if os.path.exists(self.filename):  # Check if file exists
-            try:
-                with open(self.filename, "r") as file:
-                    self.records = json.load(file)  # Load JSON data
-                print("DNS records loaded successfully.")
-            except json.JSONDecodeError:
-                print("Error reading DNS records. Starting with an empty database.")
-                self.records = {}  # If corrupted, start fresh
-        else:
-            print("No existing DNS records found. Starting fresh.")
+        """
+        Initialize in-memory storage.
+
+        Persistent storage to disk has been disabled to ensure each user
+        only sees their own DNS records (which are now stored in the browser's
+        localStorage via the frontend).
+        """
+        self.records = {}
+        # No file access – records start empty on every server start.
 
     def save_records(self):
-        """Save current DNS records to file."""
-        with open(self.filename, "w") as file:
-            json.dump(self.records, file, indent=4)  # Save as formatted JSON
-        print("DNS records saved successfully.")
+        """Persistence disabled – records are kept only in memory."""
+        # Intentionally do nothing
+        pass
 
     def add_record(self, domain, ip):
         """Add a new DNS record and save to file."""
