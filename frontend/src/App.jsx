@@ -104,6 +104,7 @@ function App() {
                 <div className="flex flex-col items-center mb-8">
                     <h1 className="mb-2 text-4xl font-bold text-transparent bg-clip-text bg-blue-400">DNS Resolver</h1>
                     <p className="text-sm text-gray-400">Fast domain resolution with compressed trie data structure</p>
+                    <p className="mt-1 text-xs text-yellow-400">Server may take a few seconds to wake up.</p>
                 </div>
                 
                 <div className="mb-8">
